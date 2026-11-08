@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f20f73" />
+    <meta
+      name="description"
+      content="Une collection de souvenirs pour célébrer les 21 ans de Lou, le 14 novembre 2026."
+    />
+    <title>Les 21 ans de Lou ✦ 14.11.2026</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="ambient-grain" aria-hidden="true"></div>
+    <div class="glow glow-one" aria-hidden="true"></div>
+    <div class="glow glow-two" aria-hidden="true"></div>
+
+    <main class="birthday-stage">
+      <div class="orbit-scene" id="orbitScene" aria-hidden="true">
+        <div class="orbit-track" id="orbitTrack"></div>
+      </div>
+
+      <section class="love-letter" aria-labelledby="birthday-title">
+        <div class="vinyl" aria-hidden="true">
+          <span class="vinyl-ring vinyl-ring-one"></span>
+          <span class="vinyl-ring vinyl-ring-two"></span>
+          <span class="vinyl-label"><b>21</b><small>LOU</small></span>
+        </div>
+
+        <p class="eyebrow">ÉDITION LIMITÉE · 14 NOVEMBRE 2026</p>
+        <h1 id="birthday-title">
+          Joyeux anniversaire
+          <span>mon amour</span>
+        </h1>
+        <p class="dedication">
+          21 ans de toi, de ton sourire et de cette lumière que tu poses partout.
+          Voici quelques tours de piste parmi tous nos souvenirs — et le début de
+          tous ceux qu’il nous reste à créer.
+        </p>
+
+        <div class="milestone" aria-label="21 ans">
+          <span>21</span>
+          <p>tours autour<br />du soleil</p>
+        </div>
+
+        <button class="celebrate-button" id="celebrateButton" type="button">
+          <span>Faire tourner la fête</span>
+          <i aria-hidden="true">♥</i>
+        </button>
+
+        <p class="countdown" id="countdown" aria-live="polite"></p>
+      </section>
+
+      <div class="corner-note corner-note-left" aria-hidden="true">FACE A</div>
+      <div class="corner-note corner-note-right" aria-hidden="true">LOVE · 33 RPM</div>
+      <div class="media-counter" id="mediaCounter" aria-hidden="true"></div>
+      <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
+    </main>
+
+    <noscript>
+      <p class="noscript-message">Active JavaScript pour faire tourner nos souvenirs.</p>
+    </noscript>
+    <script src="media-manifest.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
