@@ -3,16 +3,21 @@
 
   const allMedia = Array.isArray(window.BIRTHDAY_MEDIA) ? window.BIRTHDAY_MEDIA : [];
   const orbitTrack = document.querySelector("#orbitTrack");
-  const celebrateButton = document.querySelector("#celebrateButton");
-  const confettiLayer = document.querySelector("#confettiLayer");
+  const confettiCanvas = document.querySelector("#confettiCanvas");
+  const confettiContext = confettiCanvas.getContext("2d", { alpha: true });
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  const visibleCount = Math.min(50, allMedia.length);
+  const visibleCount = Math.min(20, allMedia.length);
   const cards = [];
   let offset = 0;
   let rotation = 0;
   let lastFrame = performance.now();
-  let partyBoostUntil = 0;
+  let celebrationStarted = false;
+  let canvasWidth = 0;
+  let canvasHeight = 0;
+  const particles = [];
+  const celebrationColors = ["#ff6fac", "#ffd3e5", "#ff1f7a", "#fff8f2"];
+  const celebrationSymbols = ["♥", "✦", "●", "♡"];
 
   function createMediaElement(item) {
     const element = document.createElement(item.type === "video" ? "video" : "img");
@@ -64,7 +69,7 @@
   function layoutOrbit(now) {
     const elapsed = Math.min(48, now - lastFrame);
     lastFrame = now;
-    const speed = now < partyBoostUntil ? 0.00012 : 0.000035;
+    const speed = 0.00012;
     rotation += elapsed * (reduceMotion ? speed * 0.15 : speed);
 
     const width = orbitTrack.clientWidth;
@@ -88,6 +93,7 @@
       card.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${scale}) rotate(${tilt}deg)`;
     });
 
+    drawCelebration(elapsed, now);
     requestAnimationFrame(layoutOrbit);
   }
 
@@ -97,32 +103,79 @@
     cards.forEach((card, index) => setCardMedia(card, offset + index));
   }
 
-  function celebrate() {
-    partyBoostUntil = performance.now() + 4500;
-    const symbols = ["♥", "✦", "●", "♡"];
-    const fragment = document.createDocumentFragment();
+  function resetParticle(particle, fillScreen = false) {
+    particle.x = Math.random() * canvasWidth;
+    particle.y = fillScreen ? Math.random() * canvasHeight : -30 - Math.random() * 100;
+    particle.size = 7 + Math.random() * 12;
+    particle.speed = 18 + Math.random() * 28;
+    particle.drift = -10 + Math.random() * 20;
+    particle.rotation = Math.random() * Math.PI * 2;
+    particle.spin = -0.8 + Math.random() * 1.6;
+    particle.phase = Math.random() * Math.PI * 2;
+    particle.opacity = 0.2 + Math.random() * 0.36;
+    particle.symbol = celebrationSymbols[Math.floor(Math.random() * celebrationSymbols.length)];
+    particle.color = celebrationColors[Math.floor(Math.random() * celebrationColors.length)];
+  }
 
-    for (let index = 0; index < 44; index += 1) {
-      const particle = document.createElement("span");
-      particle.className = "confetti";
-      particle.textContent = symbols[index % symbols.length];
-      particle.style.left = `${Math.random() * 100}%`;
-      particle.style.setProperty("--size", `${9 + Math.random() * 14}px`);
-      particle.style.setProperty("--duration", `${2.7 + Math.random() * 2.2}s`);
-      particle.style.setProperty("--drift", `${-90 + Math.random() * 180}px`);
-      particle.style.setProperty("--rotation", `${-260 + Math.random() * 720}deg`);
-      particle.style.animationDelay = `${Math.random() * 0.65}s`;
-      fragment.append(particle);
-      setTimeout(() => particle.remove(), 5600);
+  function resizeCelebration() {
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+    canvasWidth = window.innerWidth;
+    canvasHeight = window.innerHeight;
+    confettiCanvas.width = Math.round(canvasWidth * pixelRatio);
+    confettiCanvas.height = Math.round(canvasHeight * pixelRatio);
+    confettiContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+
+    const targetCount = reduceMotion ? 10 : canvasWidth < 720 ? 22 : 34;
+    while (particles.length < targetCount) {
+      const particle = {};
+      resetParticle(particle, true);
+      particles.push(particle);
     }
+    particles.length = targetCount;
+  }
 
-    confettiLayer.append(fragment);
+  function drawCelebration(elapsed, now) {
+    if (!celebrationStarted || document.hidden) return;
+    const delta = elapsed / 1000;
+    const boost = 1.75;
+    const motion = reduceMotion ? 0.22 : 1;
+
+    confettiContext.clearRect(0, 0, canvasWidth, canvasHeight);
+    confettiContext.textAlign = "center";
+    confettiContext.textBaseline = "middle";
+
+    particles.forEach((particle) => {
+      particle.y += particle.speed * delta * boost * motion;
+      particle.x += (particle.drift + Math.sin(now * 0.001 + particle.phase) * 8) * delta * motion;
+      particle.rotation += particle.spin * delta * motion;
+
+      if (particle.y > canvasHeight + 30 || particle.x < -50 || particle.x > canvasWidth + 50) {
+        resetParticle(particle);
+      }
+
+      confettiContext.save();
+      confettiContext.translate(particle.x, particle.y);
+      confettiContext.rotate(particle.rotation);
+      confettiContext.globalAlpha = Math.min(0.72, particle.opacity * boost);
+      confettiContext.fillStyle = particle.color;
+      confettiContext.font = `700 ${particle.size}px Georgia, serif`;
+      confettiContext.fillText(particle.symbol, 0, 0);
+      confettiContext.restore();
+    });
+  }
+
+  function celebrate({ boost = false } = {}) {
+    if (!celebrationStarted) {
+      celebrationStarted = true;
+      resizeCelebration();
+    }
   }
 
   buildOrbit();
+  celebrate();
   requestAnimationFrame(layoutOrbit);
-  window.setInterval(advanceCollection, reduceMotion ? 15_000 : 8_000);
-  celebrateButton.addEventListener("click", celebrate);
+  //window.setInterval(advanceCollection, reduceMotion ? 15_000 : 8_000);
+  window.addEventListener("resize", resizeCelebration, { passive: true });
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) {
       document.querySelectorAll("video").forEach((video) => video.play().catch(() => {}));
