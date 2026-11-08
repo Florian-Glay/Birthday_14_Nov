@@ -3,13 +3,11 @@
 
   const allMedia = Array.isArray(window.BIRTHDAY_MEDIA) ? window.BIRTHDAY_MEDIA : [];
   const orbitTrack = document.querySelector("#orbitTrack");
-  const mediaCounter = document.querySelector("#mediaCounter");
   const celebrateButton = document.querySelector("#celebrateButton");
   const confettiLayer = document.querySelector("#confettiLayer");
-  const countdown = document.querySelector("#countdown");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  const visibleCount = Math.min(14, allMedia.length);
+  const visibleCount = Math.min(50, allMedia.length);
   const cards = [];
   let offset = 0;
   let rotation = 0;
@@ -53,11 +51,6 @@
   }
 
   function buildOrbit() {
-    if (!allMedia.length) {
-      mediaCounter.textContent = "Ajoute tes souvenirs dans /media";
-      return;
-    }
-
     for (let index = 0; index < visibleCount; index += 1) {
       const card = document.createElement("figure");
       card.className = "media-card";
@@ -66,8 +59,6 @@
       orbitTrack.append(card);
       cards.push(card);
     }
-
-    mediaCounter.textContent = `${allMedia.length} SOUVENIRS · EN BOUCLE`;
   }
 
   function layoutOrbit(now) {
@@ -106,22 +97,6 @@
     cards.forEach((card, index) => setCardMedia(card, offset + index));
   }
 
-  function updateCountdown() {
-    const target = new Date("2026-11-14T00:00:00+01:00");
-    const now = new Date();
-    const distance = target.getTime() - now.getTime();
-
-    if (distance <= 0) {
-      countdown.textContent = "Ce disque est à toi, aujourd’hui et pour toujours ♡";
-      return;
-    }
-
-    const days = Math.floor(distance / 86_400_000);
-    const hours = Math.floor((distance % 86_400_000) / 3_600_000);
-    const minutes = Math.floor((distance % 3_600_000) / 60_000);
-    countdown.textContent = `Encore ${days} j · ${hours} h · ${minutes} min avant tes 21 ans`;
-  }
-
   function celebrate() {
     partyBoostUntil = performance.now() + 4500;
     const symbols = ["♥", "✦", "●", "♡"];
@@ -145,10 +120,8 @@
   }
 
   buildOrbit();
-  updateCountdown();
   requestAnimationFrame(layoutOrbit);
   window.setInterval(advanceCollection, reduceMotion ? 15_000 : 8_000);
-  window.setInterval(updateCountdown, 30_000);
   celebrateButton.addEventListener("click", celebrate);
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) {
