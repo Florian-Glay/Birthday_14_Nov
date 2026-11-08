@@ -37,3 +37,4 @@ Formats d’entrée pris en charge : JPG, JPEG, PNG, WebP, GIF, AVIF, MP4, WebM,
 3. Pousse une modification sur `main` ou `master`, ou lance manuellement le workflow **Déployer sur GitHub Pages**.
 
 Le workflow régénère automatiquement la liste des médias optimisés avant chaque publication. Il faut donc versionner `media-web/`, mais pas `media/`.
+Le dossier `media/` n'est pas dans le git et doit être créé soit même.
