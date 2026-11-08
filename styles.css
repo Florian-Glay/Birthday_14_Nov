@@ -7,7 +7,7 @@
   --blush: #ffd3e5;
   --cream: #fff8f2;
   --orbit-width: min(88vw, 1240px);
-  --orbit-height: min(58vh, 590px);
+  --orbit-ratio: 2.6 / 1;
 }
 
 * {
@@ -80,11 +80,21 @@ select {
 
 .orbit-scene {
   position: absolute;
-  z-index: -1;
+  z-index: 1;
   width: var(--orbit-width);
-  height: var(--orbit-height);
+  height: auto;
+  aspect-ratio: var(--orbit-ratio);
   perspective: 1000px;
   transform: translateY(2vh) rotate(-4deg);
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.orbit-scene.is-dragging,
+.orbit-scene.is-dragging * {
+  cursor: grabbing;
 }
 
 .orbit-scene::before,
@@ -106,6 +116,8 @@ select {
 .orbit-track {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .media-card {
@@ -150,6 +162,7 @@ select {
 
 .love-letter {
   position: relative;
+  top: -20svh;
   z-index: 5;
   width: min(620px, calc(100vw - 40px));
   padding: clamp(27px, 4.7vw, 58px) clamp(25px, 5vw, 64px) clamp(25px, 4vw, 48px);
@@ -307,8 +320,8 @@ h1 span {
 
 @media (max-width: 720px) {
   :root {
-    --orbit-width: 122vw;
-    --orbit-height: 72vh;
+    /* L'ellipse reste large comme sur PC et est simplement rognée sur les côtés. */
+    --orbit-width: clamp(820px, 205vw, 1120px);
   }
 
   .love-letter {
@@ -323,7 +336,8 @@ h1 span {
   }
 
   .media-card {
-    width: clamp(82px, 23vw, 124px);
+    /* Grande sur les téléphones hauts, mais limitée par la hauteur disponible. */
+    width: clamp(132px, min(46vw, 22svh), 190px);
     border-width: 0.05rem;
   }
 
@@ -339,6 +353,16 @@ h1 span {
 @media (max-height: 690px) {
   .love-letter {
     transform: scale(0.56);
+  }
+}
+
+@media (max-width: 720px) and (max-height: 690px) {
+  .media-card {
+    width: clamp(112px, min(42vw, 20svh), 150px);
+  }
+
+  .orbit-scene {
+    transform: translateY(-3svh) rotate(-5deg);
   }
 }
 

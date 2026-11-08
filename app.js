@@ -2,16 +2,21 @@
   "use strict";
 
   const allMedia = Array.isArray(window.BIRTHDAY_MEDIA) ? window.BIRTHDAY_MEDIA : [];
+  const orbitScene = document.querySelector("#orbitScene");
   const orbitTrack = document.querySelector("#orbitTrack");
   const confettiCanvas = document.querySelector("#confettiCanvas");
   const confettiContext = confettiCanvas.getContext("2d", { alpha: true });
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  const visibleCount = Math.min(20, allMedia.length);
+  const visibleCount = Math.min(30, allMedia.length);
+  const depthSpacingBias = 0.9;
   const cards = [];
   let offset = 0;
   let rotation = 0;
   let lastFrame = performance.now();
+  let isDraggingOrbit = false;
+  let activePointerId = null;
+  let lastPointerX = 0;
   let celebrationStarted = false;
   let canvasWidth = 0;
   let canvasHeight = 0;
@@ -69,8 +74,10 @@
   function layoutOrbit(now) {
     const elapsed = Math.min(48, now - lastFrame);
     lastFrame = now;
-    const speed = 0.00012;
-    rotation += elapsed * (reduceMotion ? speed * 0.15 : speed);
+    const speed = 0.00005;
+    if (!isDraggingOrbit) {
+      rotation -= elapsed * (reduceMotion ? speed * 0.15 : speed);
+    }
 
     const width = orbitTrack.clientWidth;
     const height = orbitTrack.clientHeight;
@@ -78,17 +85,18 @@
     const radiusY = height * 0.46;
 
     cards.forEach((card, index) => {
-      const angle = rotation + (index / visibleCount) * Math.PI * 2;
+      const uniformAngle = rotation + (index / visibleCount) * Math.PI * 2;
+      const angle = uniformAngle - depthSpacingBias * Math.cos(uniformAngle);
       const sine = Math.sin(angle);
       const cosine = Math.cos(angle);
       const x = cosine * radiusX;
       const y = sine * radiusY;
       const depth = (sine + 1) / 2;
-      const scale = 0.56 + depth * 0.66;
+      const scale = 0.3 + depth * 1.2;
       const tilt = cosine * -7;
 
       card.style.zIndex = String(Math.round(depth * 100));
-      card.style.opacity = String(0.34 + depth * 0.66);
+      card.style.opacity = String(0.54 + depth * 0.46);
       card.style.filter = `saturate(${0.7 + depth * 0.45}) brightness(${0.54 + depth * 0.56})`;
       card.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${scale}) rotate(${tilt}deg)`;
     });
@@ -98,9 +106,40 @@
   }
 
   function advanceCollection() {
-    if (allMedia.length <= visibleCount) return;
+    if (isDraggingOrbit || allMedia.length <= visibleCount) return;
     offset = (offset + visibleCount) % allMedia.length;
     cards.forEach((card, index) => setCardMedia(card, offset + index));
+  }
+
+  function beginOrbitDrag(event) {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+
+    isDraggingOrbit = true;
+    activePointerId = event.pointerId;
+    lastPointerX = event.clientX;
+    orbitScene.classList.add("is-dragging");
+    orbitScene.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  }
+
+  function moveOrbit(event) {
+    if (!isDraggingOrbit || event.pointerId !== activePointerId) return;
+
+    const horizontalMovement = event.clientX - lastPointerX;
+    lastPointerX = event.clientX;
+    rotation -= horizontalMovement * 0.006;
+    event.preventDefault();
+  }
+
+  function endOrbitDrag(event) {
+    if (!isDraggingOrbit || event.pointerId !== activePointerId) return;
+
+    isDraggingOrbit = false;
+    activePointerId = null;
+    orbitScene.classList.remove("is-dragging");
+    if (orbitScene.hasPointerCapture(event.pointerId)) {
+      orbitScene.releasePointerCapture(event.pointerId);
+    }
   }
 
   function resetParticle(particle, fillScreen = false) {
@@ -125,7 +164,7 @@
     confettiCanvas.height = Math.round(canvasHeight * pixelRatio);
     confettiContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
-    const targetCount = reduceMotion ? 10 : canvasWidth < 720 ? 22 : 34;
+    const targetCount = reduceMotion ? 30 : canvasWidth < 720 ? 35 : 60;
     while (particles.length < targetCount) {
       const particle = {};
       resetParticle(particle, true);
@@ -176,6 +215,11 @@
   requestAnimationFrame(layoutOrbit);
   //window.setInterval(advanceCollection, reduceMotion ? 15_000 : 8_000);
   window.addEventListener("resize", resizeCelebration, { passive: true });
+  orbitScene.addEventListener("pointerdown", beginOrbitDrag);
+  orbitScene.addEventListener("pointermove", moveOrbit);
+  orbitScene.addEventListener("pointerup", endOrbitDrag);
+  orbitScene.addEventListener("pointercancel", endOrbitDrag);
+  orbitScene.addEventListener("lostpointercapture", endOrbitDrag);
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) {
       document.querySelectorAll("video").forEach((video) => video.play().catch(() => {}));
